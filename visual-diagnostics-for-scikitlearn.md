@@ -450,12 +450,28 @@ regrErrorViz(RANSACRegressor(),conc_features, conc_labels)
 Finally, we can plot residuals to visualize error and the extent to which our model has captured the behavior of the data.  If the data points appear to be evenly dispersed around the plotted line, our model is performing well. If the data points appear to have some structure that does not coincide with the plotted line, we have failed to capture its behavior and should either consider a new model or an exploration of the hyperparameters.
 
 ```python
-plt.scatter(model.predict(X_train), model.predict(X_train) - y_train, c='b', s=40, alpha=0.5)
-plt.scatter(model.predict(X_test), model.predict(X_test) - y_test, c='g', s=40)
-plt.hlines(y=0, xmin=0, xmax=50)
-plt.title('Plotting residuals using training (blue) and test green) data')
-plt.ylabel('Residuals')
+def plotResids(features,labels,model):
+    for feature in list(features):
+        splits = cv.train_test_split(features[[feature]], labels, test_size=0.2)
+        X_train, X_test, y_train, y_test = splits
+        model.fit(X_train, y_train)
+        plt.scatter(model.predict(X_train), model.predict(X_train) - y_train, c='b', s=40, alpha=0.5)
+        plt.scatter(model.predict(X_test), model.predict(X_test) - y_test, c='g', s=40)
+    plt.hlines(y=0, xmin=0, xmax=100)
+    plt.title('Plotting residuals using training (blue) and test (green) data')
+    plt.ylabel('Residuals')
+    plt.xlim([20,70])
+    plt.ylim([-50,50])
+    plt.show()
+
+plotResids(conc_features,conc_labels,Ridge())
+plotResids(conc_features,conc_labels,LinearRegression())
+plotResids(conc_features,conc_labels,SVR())
 ```
+
+![Plotting residuals in regression models](figures/residuals.png)
+
+
 ## Advanced machine learning: Visual tuning
 This kind of evaluation of our models should flow directly into a reflection on the models we initially selected, in some cases leading us to choose different models. However, our model evaluations should also prompt us to consider tuning. As you may have noticed, for every model we have used so far, we have accepted the default Scikit-Learn parameters and employed absolutely no hyperparameter tuning whatsoever. Getting good at tuning a model by adjusting its parameters is the next step to getting good at machine learning. How do you pick the best parameters? Most people use a grid search technique, establishing a range of parameters for the model to experiment with and then select the best performing. The downside of this approach is that it is largely a blind search. The best case scenario is that you end up with a better performing model but no additional intuition around tuning. A more common scenario is that you don't end up with a better model or more intuition.  
 

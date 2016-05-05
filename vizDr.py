@@ -117,6 +117,21 @@ def regrErrorViz(model,features,labels):
     ax.set_ylabel('Predicted')
     plt.show()
 
+def plotResids(features,labels,model):
+    for feature in list(features):
+        splits = cv.train_test_split(features[[feature]], labels, test_size=0.2)
+        X_train, X_test, y_train, y_test = splits
+        model.fit(X_train, y_train)
+        plt.scatter(model.predict(X_train), model.predict(X_train) - y_train, c='b', s=40, alpha=0.5)
+        plt.scatter(model.predict(X_test), model.predict(X_test) - y_test, c='g', s=40)
+    plt.hlines(y=0, xmin=0, xmax=100)
+    plt.title('Plotting residuals using training (blue) and test (green) data')
+    plt.ylabel('Residuals')
+    plt.xlim([20,70])
+    plt.ylim([-50,50])
+    plt.show()
+
+
 
 if __name__ == '__main__':
     # download_data(OCCUPANCY)
@@ -273,30 +288,6 @@ if __name__ == '__main__':
     # print "Mean squared error = %0.3f" % mse(y_true, y_pred)
     # print "R2 score = %0.3f" % r2_score(y_true, y_pred)
 
-
-
-    splits = cv.train_test_split(concrete[['superplast']], concrete['strength'], test_size=0.2)
-    X_train, X_test, y_train, y_test = splits
-
-    ridge_reg = Ridge()
-    ridge_reg.fit(X_train, y_train)
-    regrViz(ridge_reg, X_test, y_test)
-
-    splits = cv.train_test_split(concrete[['cement']], concrete['strength'], test_size=0.2)
-    X_train, X_test, y_train, y_test = splits
-
-    ridge_reg = Ridge()
-    ridge_reg.fit(X_train, y_train)
-    regrViz(ridge_reg, X_test, y_test)
-
-    # lasso_reg = Lasso()
-    # lasso_reg.fit(X_train, y_train)
-    # y_pred = lasso_reg.predict(X_test)
-    # # print "Mean squared error = %0.3f" % mse(y_true, y_pred)
-    # # print "R2 score = %0.3f" % r2_score(y_true, y_pred)
-    #
-    # eln_reg = ElasticNet()
-    # eln_reg.fit(X_train, y_train)
-    # y_pred = eln_reg.predict(X_test)
-    # # print "Mean squared error = %0.3f" % mse(y_true, y_pred)
-    # # print "R2 score = %0.3f" % r2_score(y_true, y_pred)
+    plotResids(conc_features,conc_labels,SVR())
+    plotResids(conc_features,conc_labels,Lasso())
+    plotResids(conc_features,conc_labels,RANSACRegressor())
