@@ -6,7 +6,9 @@
 
 
 ## Introduction
-Python and high level libraries like Scikit-learn, TensorFlow, NLTK, PyBrain, Theano, and MLPY have made machine learning accessible to a broad programming community that might never have found it otherwise. With the democratization of these tools, there is now a large, and growing, population of machine learning practitioners who are primarily self-taught. At the same time, the stakes of machine learning have never been higher; predictive tools are driving decision-making in every sector, from business, art, and engineering to education, law, and defense. In a time when these few lines of Python...
+Python and high level libraries like Scikit-learn, TensorFlow, NLTK, PyBrain, Theano, and MLPY have made machine learning accessible to a broad programming community that might never have found it otherwise. With the democratization of these tools, there is now a large, and growing, population of machine learning practitioners who are primarily self-taught. At the same time, the stakes of machine learning have never been higher; predictive tools are driving decision-making in every sector, from business, art, and engineering to education, law, and defense.
+
+How do we ensure our predictions are valid and robust in a time when these few lines of Python...
 
 ```python
 from sklearn.linear_model import LinearRegression
@@ -15,9 +17,9 @@ model.fit(X,y)
 model.predict(X)
 ```
 
-...can instantiate and fit a predictive model, how do we ensure the predictions are valid and robust? How do you build intuition around what initial model to select? Which features do you use? Which should you normalize? How do you identify problems like local minima and overfit?
+...can instantiate and fit a model? How do you build intuition around what initial model to select? Which features do you use? Which should you normalize? How do you identify problems like local minima and overfit?
 
-Let's take the following four datasets for example, imagining that we want to produce predictive models for each set:    
+To help us think through these questions, let's take a look at the following four datasets, imagining that we want to produce predictive models for each set:    
 
 ![Anscombe's Data](figures/anscombesdatasets.png)
 
@@ -36,9 +38,9 @@ What kind of model should we use to fit the data? Let's compute some statistical
 In other words, from a statistical standpoint, they're nearly identical. This might lead us to decide to use a single model for each, maybe `sklearn.linear_model.LinearRegression`? And yet, if we were to plot the points for each of the datasets, we would see that they are not at all alike:    
 ![Anscombe's Quartet](figures/anscombesquartet.png)   
 
-More importantly, a simple linear regression model is not going to perform equally well on each. While we can see linear relationships between _x1_ and _y1_ and between _x3_ and _y3_, their regression lines are substantially different. In the (_x2_,_y2_) plot, we can see that the variables are related but not linearly correlated, and also that they are not normally distributed. Both the (_x3_,_y3_) and the (_x4_,_y4_) datasets contain outliers big enough to strongly influence the correlation coefficients.
+More importantly, a simple linear regression model is not going to perform equally well on each. While we can see a linear relationship in (_x1_,_y1_) and (_x3_,_y3_), their regression lines are substantially different. In the (_x2_,_y2_) plot, we can see that the variables are related but not linearly correlated, and also that they are not normally distributed. Moreover, both the (_x3_,_y3_) and the (_x4_,_y4_) datasets contain outliers big enough to strongly influence the correlation coefficients.
 
-Assembled by English statistician Frank Anscombe in 1973, the takeaway from these four datasets and their corresponding visualizations, known as [Anscombe's Quartet](https://en.wikipedia.org/wiki/Anscombe%27s_quartet), is that of all of the analytical tools at our disposal, the human visual cortex is sometimes going to be the most important. In data science, visual diagnostics are a powerful but frequently underestimated tool. Visualizations allows us to identify patterns we simply cannot see by looking at raw data alone. Where static outputs and tabular data may render patterns opaque, human visual analysis can uncover volumes and lead to more robust programming and better data products. In machine learning, where lots of things can cause trouble (messy data, overtraining, undertuning, the curse of dimensionality, etc.) visual diagnostics can mean the difference between a model that crashes and burns, and one that predicts the future. Visualization tools can offer analytical support at several key stages in the machine learning process. In this post, I'll demonstrate how to deploy some of the visualization tools from the standard Scikit-Learn and MatPlotLib libraries (along with a few special tricks from Pandas, Bokeh, and Seaborn) and illustrate how visual diagnostics can support model selection, feature analysis, and tuning.
+Assembled by English statistician Frank Anscombe in 1973, the takeaway from these four datasets, known as [Anscombe's Quartet](https://en.wikipedia.org/wiki/Anscombe%27s_quartet), and their corresponding visualizations is that of all of the analytical tools at our disposal, sometimes our eyes are the most important. In data science, visual diagnostics are a powerful but frequently underestimated tool. Visualizations don't have to be the end of the pipeline. They can allow us to find patterns we simply cannot see by looking at raw data alone. Where static outputs and tabular data may render patterns opaque, human visual analysis can uncover volumes and lead to more robust programming and better data products. In machine learning, where lots of things can cause trouble (messy data, overtraining, undertuning, the curse of dimensionality, etc.) visual diagnostics can mean the difference between a model that crashes and burns, and one that predicts the future. In this post, I'd like to show how visualization tools can offer analytical support at several key stages in the machine learning process. I'll demonstrate how to deploy some of the visualization tools from the standard Scikit-Learn and MatPlotLib libraries (along with a few special tricks from Pandas, Bokeh, and Seaborn) and illustrate how visual diagnostics can support the "model selection triple": doing feature analysis, choosing a model, and tuning its parameters.
 
 
 ### A Range of Datasets  
@@ -103,10 +105,10 @@ print concrete.head()
 print concrete.describe()
 ```
 
-We can start to get a feel for the differences across our three datasets from the output of the .describe() statements above. For example, in the occupancy dataset, the standard deviations for light and CO2 emissions are two orders of magnitude greater than they are for temperature and humidity, meaning that some scaling may be necessary. In the credit card default dataset, the distribution of the labels (0 for credit card holders who did not default on the payment and 1 for those who did) appears somewhat uneven, which can be an indicator of possible class imbalance.  But, if you had to select which features were most likely to be predictive based solely on the descriptive tables, it would be pretty tough. At this point, those who have some experience with predictive modeling will often begin to graph the data so that they can visualize the behavior of the different feature vectors.
+We can start to get a feel for the differences across our three datasets from the output of the `.describe()` statements above. For example, in the occupancy dataset, the standard deviations for light and CO2 emissions are two orders of magnitude greater than they are for temperature and humidity, meaning that some scaling may be necessary. In the credit card default dataset, the distribution of the labels (0 for credit card holders who did not default on the payment and 1 for those who did) appears uneven, which can be an indicator of possible class imbalance.  But, if you had to select which features were most likely to be predictive based solely on the descriptive tables, it would be pretty tough, especially without domain expertise (what the heck is superplasticity?). At this point, those who have some experience with predictive modeling will often begin to visualize the data so that they can see the behavior of the different feature vectors.
 
 ### Boxplots
-Boxplots (or 'box-and-whisker' plots) enable us to look at the central tendency of the data, see the distribution, and examine outliers. In the example below, each feature of the concrete dataset is listed out on the x-axis and for each feature, we get to visualize the data's behavior. The boxes indicate the upper and lower quartiles of the data, the black line in the center of each box indicates the median, the whiskers show the greatest and least values (with the outliers excluded), and the diamonds show the outliers.
+Boxplots (or 'box-and-whisker' plots) enable us to look at the central tendency of the data, see the distribution, and examine outliers. In the example below, each feature of the concrete dataset is listed out on the x-axis and for each feature, we get to visualize the data's behavior. The boxes indicate the upper and lower quartiles of the data, the black line in the center of each box indicates the median, the whiskers show the biggest and smallest values (with the outliers excluded), and the diamonds show the outliers.
 
 ![Boxplot for Concrete Dataset](figures/concrete_boxviz.png)   
 
@@ -151,7 +153,7 @@ splom_viz(concrete)
 ```
 
 ### Radviz
-Radial visualizations are based on a spring tension minimization algorithm. The features of the dataset are equally spaced on a unit circle and the instances are dropped into the center of the circle. The features then 'pull' the instances towards their position on the circle in proportion to their normalized numerical value for that instance. In the radviz graph for the occupancy dataset below, we can see that there is some definite separation between the rooms that are labeled as occupied and those that are vacant. Moreover, it appears that temperature seems to be one of the most predictive features, given how strongly the green dots (the unoccupied rooms) are being 'pulled' towards that part of the circle.
+Radial visualizations are based on a spring tension minimization algorithm. The features of the dataset are equally spaced on a unit circle and the instances are dropped into the center of the circle. The features then 'pull' the instances towards their position on the circle in proportion to their normalized numerical value for that instance. In the radviz graph for the occupancy dataset below, we can see that there is some definite separation between the rooms that are labeled as occupied and those that are vacant. Moreover, it appears that temperature seems to be one of the more predictive features, given how strongly the green dots (the unoccupied rooms) are being 'pulled' towards that part of the circle.
 
 ![Occupancy Radviz](figures/occupancy_radviz.png)  
 
@@ -180,7 +182,7 @@ def pcoord_viz(df, labels):
 pcoord_viz(occupancy.ix[:,1:],'occupied')
 ```
 
-Feature analysis can be a big challenge as the dimensionality of the data increases, even for experts. Frankly, there aren't a lot of tools out there for dealing with high-dimensional data. The options are generally hierarchical aggregation, dimensionality reduction (like PCA and LDA), and dimensional subsetting. For dimensional subsetting, one visual tactic is to use the scatterplot matrix approach to generate small multiples; another is to do a series of independent joint plots to examine the relationships and correlations between each possible pair of features. In the jointplot below, we can see that there is a relationship between the amounts of individuals' first bill in April and their last bill in September.
+Feature analysis can be a big challenge as the dimensionality of the data increases, even for experts. Frankly, there aren't a lot of tools out there for dealing with high-dimensional data. The options are generally hierarchical aggregation, dimensionality reduction (like PCA and LDA), and dimensional subsetting. For dimensional subsetting, one visual tactic is to use the scatterplot matrix approach to generate small multiples; another is to do a series of independent joint plots to examine the relationships and correlations between each possible pair of features. In the jointplot below, we can examine the relationship between the amounts of individuals' first bill in April and their last bill in September.
 
 ![First to Last Bill Jointplot for Credit Dataset](figures/credit_jointviz.png)
 
@@ -197,7 +199,7 @@ In addition to being a practical and accessible way to augment the feature analy
 
 ![Scikit-Learn: Choosing the Right Estimator](figures/scikitlearncheatsheet.png)
 
-First we are asked whether we have more than 50 samples...
+Let's try it together. First we are asked whether we have more than 50 samples...
 
 ```python
 print len(occupancy)
@@ -273,7 +275,7 @@ y_pred = knn_clf.predict(X_test)
 print confusion_matrix(y_true, y_pred)
 ```
 
-Meanwhile for our concrete dataset, we must determine whether we think all of the features are important, or only a few of them. If we decide to keep all the features as is, we're led to the suggestions of using `sklearn.linear_model.RidgeRegression` (which will identify features that are less predictive and ensure they have less influence in the model) or possibly `sklearn.svm.SVR` with a linear kernel (which is similar to the linearSVC classifier). If we guess that some of the features are not important, we might decide instead to choose `sklearn.linear_model.Lasso` (which will drop out any features that aren't predictive) or `sklearn.linear_model.ElasticNet` (which will try to find a happy medium between the lasso and ridge methods, taking the linear combination of their L1 and L2 penalties). Let's try a few because why not:    
+Meanwhile for our concrete dataset, we must determine whether we think all of the features are important, or only a few of them. If we decide to keep all the features as is, the chart suggests using `sklearn.linear_model.RidgeRegression` (which will identify features that are less predictive and ensure they have less influence in the model) or possibly `sklearn.svm.SVR` with a linear kernel (which is similar to the linearSVC classifier). If we guess that some of the features are not important, we might decide instead to choose `sklearn.linear_model.Lasso` (which will drop out any features that aren't predictive) or `sklearn.linear_model.ElasticNet` (which will try to find a happy medium between the lasso and ridge methods, taking the linear combination of their L1 and L2 penalties). Let's try a few because, why not?    
 
 ```python
 from sklearn.linear_model import Ridge, Lasso, ElasticNet
@@ -304,11 +306,11 @@ print "Mean squared error = %0.3f" % mse(y_true, y_pred)
 print "R2 score = %0.3f" % r2_score(y_true, y_pred)
 ```
 
-Visualizations and flow diagrams of the model selection process like this can be helpful. Another example is Dr. Saed Sayad's ["data mining map"](http://www.saedsayad.com/data_mining_map.htm), which is much more comprehensive than the Scikit-Learn flow chart. In addition to predictive methods ('predicting the future'), Sayad's map also includes an entire section on 'explaining the past'. Below is our iteration on the Sayad map, a genealogical chart that aims to present the same broad algorithmic coverage for the 'predicting the future' models (in addition to representing some of the kinds of machine learning, like reinforcement learning, which are not represented in original) while also integrating color to represent what Hadley Wickham has [referred to](http://had.co.nz/stat645/model-vis.pdf) as 'model families':
+Visualizations and flow diagrams of the model selection process like this can be helpful, especially when you're just getting started out with machine learning. Another example of a tool like this is Dr. Saed Sayad's ["data mining map"](http://www.saedsayad.com/data_mining_map.htm), which is much more comprehensive than the Scikit-Learn flow chart. In addition to predictive methods ('predicting the future'), Sayad's map also includes an entire section on 'explaining the past'. Below is our iteration on the Sayad map, a genealogical chart that aims to present the same broad algorithmic coverage for the 'predicting the future' models (in addition to representing some of the kinds of machine learning, like reinforcement learning, which are not represented in original). This version also integrates color to encourage experimentation within what Hadley Wickham [refers to](http://had.co.nz/stat645/model-vis.pdf) as 'model families':
 
 ![Model selection genealogical chart](figures/bettermap.jpg)
 
-And, while unsupervised methods are beyond the scope of this post, it's worth noting that the Scikit-Learn [cluster comparison plot](http://scikit-learn.org/stable/auto_examples/cluster/plot_cluster_comparison.html) can be a useful tool for unsupervised model selection in that it depicts the substantial difference in the performance of clustering models across different datasets.
+Also, while unsupervised methods are beyond the scope of this post, it's worth noting that the Scikit-Learn [cluster comparison plot](http://scikit-learn.org/stable/auto_examples/cluster/plot_cluster_comparison.html) can be a useful tool for unsupervised model selection in that it depicts the substantial difference in the performance of clustering models across different datasets.
 
 
 ## Visual Evaluation in Scikit-Learn       
@@ -325,7 +327,7 @@ The results of our classifiers were presented as confusion matrices, which looke
 We can use this diagram to help us interpret those results:     
 ![Confusion Matrix](figures/confusionmatrix.jpg)   
 
-True to their name, confusion matrices can sometimes be a bit difficult to unpack, particularly the more classes you have. We propose using classification reports instead, which include the same basic information as in a confusion matrix, but with several added advantages. First, where the confusion matrix merely labels whether instances have be classified properly or improperly, a classification report provides three different measures of accuracy: precision, recall, and F1 score. Moreover, the classification report can conveniently include the names of the labels for each of the classes, which helps a lot with interpretability. With some gentle manipulation of the built-in classification report metric in Scikit-Learn (`sklearn.metrics.classification_report`), we can also integrate a color-coded heatmap that will help guide our eye toward evaluating our predictive successes (the darkest red) and weaknesses (the lightest pinks).
+True to their name, confusion matrices can sometimes be a bit difficult to unpack, particularly the more classes you have. We propose using classification reports instead, which include the same basic information as in a confusion matrix, but with several added advantages. First, where the confusion matrix merely labels whether instances have be classified properly or improperly, a classification report provides three different measures of accuracy: precision, recall, and F1 score. Moreover, the classification report can conveniently include the names of the labels for each of the classes, which helps a lot with interpretability. With some gentle manipulation of the built-in classification report metric in Scikit-Learn (`sklearn.metrics.classification_report`), we can also integrate a color-coded heatmap that will help guide our eye toward evaluating our predictive successes (the darkest reds) and weaknesses (the lightest pinks).
 
 ```python
 def plot_classification_report(cr, title='Classification report', cmap=plt.cm.Reds):
@@ -362,7 +364,7 @@ def plot_classification_report(cr, title='Classification report', cmap=plt.cm.Re
 
 
 #### ROC Curves
-Another way to examine the performance of our classifiers is with the Receiver Operating Characteristic (ROC). We can import `metrics.roc_curve` from Scikit-Learn and call it on the result of our model in order to calculate the true positive and false positive rates, as well as the thresholds. Even better, we can use ROC to visualize the tradeoff between our classifier's sensitivity (how well it is optimized to find true positives) and its specificity (how well it is optimized to avoid false positives). In the plot, the x-axis indicates the false positive rate and the y-axis shows the true positive rate.
+Another way to examine the performance of our classifiers is with the Receiver Operating Characteristic (ROC). We can import `metrics.roc_curve` from Scikit-Learn and call it on the result of our model in order to get a numeric calculation of the true positive and false positive rates, as well as the thresholds. Even better, we can plot the ROC to visualize the tradeoff between our classifier's sensitivity (how well it is optimized to find true positives) and its specificity (how well it is optimized to avoid false positives). In the plot, the x-axis indicates the false positive rate and the y-axis shows the true positive rate.
 
 ```python
 from sklearn.metrics import auc
@@ -384,9 +386,9 @@ plt.show()
 
 ![ROC_AUC Curve](figures/roc_auc.png)
 
-If your ROC curve is a straight horizontal line your classifier is perfect (which should make you a bit skeptical about your data...). If your curve is pulling a lot toward to the upper left corner, your classifier has good accuracy. If your ROC curve is exactly aligned with the diagonal, your classifier is just as good at making predictions as a random coin toss.
+If your ROC curve is a straight horizontal line your classifier is perfect (which should make you a bit skeptical about your data...). If your curve is pulling a lot toward to the upper left corner, your classifier has good accuracy. If your curve is exactly aligned with the diagonal, your classifier is about as effective as a random coin toss.
 
-We can also calculate the area under curve (AUC) and integrate this figure into our plot. If the AUC is greater than .80, your classifier is very strong. If your AUC is between .60 - .80, your classifier is good, but might be better if you keep tuning or change models. An AUC of less than .60 might lead you to question whether the features you are using are actually predictive.
+We can also calculate the area under curve (AUC) and integrate that into our plot. If the AUC is greater than .80, your classifier is very strong. If your AUC is between .60 - .80, your classifier is good, but might be better if you keep tuning or change models. An AUC of less than .60 might lead you to question whether the features you are using are actually predictive.
 
 
 ### Evaluating Regressors
@@ -396,35 +398,56 @@ Mean squared error = 116.268
 R2 score = 0.606
 ```
 
-#### Seeing your model
-
+With regression, we can visualize how models perform for different features within the dataspace:
 ```python
-plt.scatter(X_test, y_test,  color='black')
-plt.plot(X_test, model.predict(X_test), color='blue', linewidth=3)
+def regrViz(model,X,y):
+    plt.scatter(X, y,  color='black')
+    plt.plot(X, model.predict(X), color='blue', linewidth=3)
+    plt.xticks(())
+    plt.yticks(())
+    plt.show()
 
-plt.xticks(())
-plt.yticks(())
+splits = cv.train_test_split(concrete[['water']], concrete['strength'], test_size=0.2)
+X_train, X_test, y_train, y_test = splits
+ridge_reg = Ridge()
+ridge_reg.fit(X_train, y_train)
+regrViz(ridge_reg, X_test, y_test)
 
-plt.show()
+splits = cv.train_test_split(concrete[['superplast']], concrete['strength'], test_size=0.2)
+X_train, X_test, y_train, y_test = splits
+ridge_reg = Ridge()
+ridge_reg.fit(X_train, y_train)
+regrViz(ridge_reg, X_test, y_test)
+
+splits = cv.train_test_split(concrete[['cement']], concrete['strength'], test_size=0.2)
+X_train, X_test, y_train, y_test = splits
+ridge_reg = Ridge()
+ridge_reg.fit(X_train, y_train)
+regrViz(ridge_reg, X_test, y_test)
 ```
 
-#### Visualizing prediction errors
+![Regression models in dataspace](figures/model_in_dataspace.png)
+
+We can also visualize the prediction errors of different models with cross validation:
 
 ```python
-from sklearn.cross_validation import cross_val_predict
+def regrErrorViz(model,features,labels):
+    predicted = cv.cross_val_predict(model, features, labels, cv=12)
+    fig, ax = plt.subplots()
+    ax.scatter(labels, predicted)
+    ax.plot([labels.min(), labels.max()], [labels.min(), labels.max()], 'k--', lw=4)
+    ax.set_xlabel('Measured')
+    ax.set_ylabel('Predicted')
+    plt.show()
 
-predicted = cross_val_predict(model, conc_features, conc_labels, cv=12)
-
-fig, ax = plt.subplots()
-ax.scatter(conc_labels, predicted)
-ax.plot([conc_labels.min(), conc_labels.max()], [conc_labels.min(), conc_labels.max()], 'k--', lw=4)
-ax.set_xlabel('Measured')
-ax.set_ylabel('Predicted')
-plt.show()
+regrErrorViz(Ridge(),conc_features, conc_labels)
+regrErrorViz(SVR(),conc_features, conc_labels)
+regrErrorViz(RANSACRegressor(),conc_features, conc_labels)
 ```
 
-#### Plotting the Residuals
-Residual plots can help with visualizing error and the extent to which your model has captured the behavior of the data.  If the data points appear to be evenly dispersed around the plotted line, our model is performing well. If the data points appear to have some structure that does not coincide with the plotted line, we have failed to capture its behavior and should either consider a new model or an exploration of the hyperparameters.
+![Visualizing error in regression models](figures/model_error.png)
+
+Finally, we can plot residuals to visualize error and the extent to which our model has captured the behavior of the data.  If the data points appear to be evenly dispersed around the plotted line, our model is performing well. If the data points appear to have some structure that does not coincide with the plotted line, we have failed to capture its behavior and should either consider a new model or an exploration of the hyperparameters.
 
 ```python
 plt.scatter(model.predict(X_train), model.predict(X_train) - y_train, c='b', s=40, alpha=0.5)

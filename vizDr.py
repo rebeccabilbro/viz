@@ -27,7 +27,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.preprocessing import normalize, scale
 
 from sklearn.svm import SVR, LinearSVC
-from sklearn.linear_model import Ridge, Lasso, ElasticNet
+from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, BayesianRidge, RANSACRegressor
 from sklearn.neighbors import KNeighborsClassifier
 
 
@@ -101,6 +101,21 @@ def plot_classification_report(cr, title='Classification report', cmap=plt.cm.Re
     plt.xlabel('Measures')
     plt.show()
 
+def regrViz(model,X,y):
+    plt.scatter(X, y,  color='black')
+    plt.plot(X, model.predict(X), color='blue', linewidth=3)
+    plt.xticks(())
+    plt.yticks(())
+    plt.show()
+
+def regrErrorViz(model,features,labels):
+    predicted = cv.cross_val_predict(model, features, labels, cv=12)
+    fig, ax = plt.subplots()
+    ax.scatter(labels, predicted)
+    ax.plot([labels.min(), labels.max()], [labels.min(), labels.max()], 'k--', lw=4)
+    ax.set_xlabel('Measured')
+    ax.set_ylabel('Predicted')
+    plt.show()
 
 
 if __name__ == '__main__':
@@ -156,27 +171,27 @@ if __name__ == '__main__':
     # joint_viz('cement','strength',concrete)
 
 
-    # We'll divide our occupancy data into features (attributes) and labels (targets)
-    occ_features = occupancy[['temp', 'humid', 'light', 'co2', 'hratio']]
-    occ_labels   = occupancy['occupied']
+    # # We'll divide our occupancy data into features (attributes) and labels (targets)
+    # occ_features = occupancy[['temp', 'humid', 'light', 'co2', 'hratio']]
+    # occ_labels   = occupancy['occupied']
+    # #
+    # # Let's scale our occupancy input vectors
+    # standardized_occ_features = scale(occ_features)
     #
-    # Let's scale our occupancy input vectors
-    standardized_occ_features = scale(occ_features)
-
-    # Then split the data into 'test' and 'train' for cross validation
-    splits = cv.train_test_split(standardized_occ_features, occ_labels, test_size=0.2)
-    X_train, X_test, y_train, y_test = splits
-
-    # We'll use the suggested LinearSVC model first
-    lin_clf = LinearSVC()
-    lin_clf.fit(X_train, y_train)
-    y_true = y_test
-    y_pred = lin_clf.predict(X_test)
-    # print confusion_matrix(y_true, y_pred)
-    # print classification_report(y_true, y_pred, target_names=["not occupied","occupied"])
-    cr = classification_report(y_true, y_pred)
-    plot_classification_report(cr)
-
+    # # Then split the data into 'test' and 'train' for cross validation
+    # splits = cv.train_test_split(standardized_occ_features, occ_labels, test_size=0.2)
+    # X_train, X_test, y_train, y_test = splits
+    #
+    # # We'll use the suggested LinearSVC model first
+    # lin_clf = LinearSVC()
+    # lin_clf.fit(X_train, y_train)
+    # y_true = y_test
+    # y_pred = lin_clf.predict(X_test)
+    # # print confusion_matrix(y_true, y_pred)
+    # # print classification_report(y_true, y_pred, target_names=["not occupied","occupied"])
+    # cr = classification_report(y_true, y_pred)
+    # plot_classification_report(cr)
+    #
     #
     # # Then try the k-nearest neighbor model next
     # knn_clf = KNeighborsClassifier()
@@ -246,18 +261,34 @@ if __name__ == '__main__':
     # plt.show()
 
 
-    # conc_features = concrete[['cement', 'slag', 'ash', 'water', 'superplast', 'coarse', 'fine', 'age']]
-    # conc_labels   = concrete['strength']
-    #
-    # splits = cv.train_test_split(conc_features, conc_labels, test_size=0.2)
-    # X_train, X_test, y_train, y_test = splits
-    # ridge_reg = Ridge()
-    # ridge_reg.fit(X_train, y_train)
-    # y_true = y_test
-    # y_pred = ridge_reg.predict(X_test)
-    # # print "Mean squared error = %0.3f" % mse(y_true, y_pred)
-    # # print "R2 score = %0.3f" % r2_score(y_true, y_pred)
-    #
+    conc_features = concrete[['cement', 'slag', 'ash', 'water', 'superplast', 'coarse', 'fine', 'age']]
+    conc_labels   = concrete['strength']
+
+    splits = cv.train_test_split(conc_features, conc_labels, test_size=0.2)
+    X_train, X_test, y_train, y_test = splits
+    ridge_reg = Ridge()
+    ridge_reg.fit(X_train, y_train)
+    y_true = y_test
+    y_pred = ridge_reg.predict(X_test)
+    # print "Mean squared error = %0.3f" % mse(y_true, y_pred)
+    # print "R2 score = %0.3f" % r2_score(y_true, y_pred)
+
+
+
+    splits = cv.train_test_split(concrete[['superplast']], concrete['strength'], test_size=0.2)
+    X_train, X_test, y_train, y_test = splits
+
+    ridge_reg = Ridge()
+    ridge_reg.fit(X_train, y_train)
+    regrViz(ridge_reg, X_test, y_test)
+
+    splits = cv.train_test_split(concrete[['cement']], concrete['strength'], test_size=0.2)
+    X_train, X_test, y_train, y_test = splits
+
+    ridge_reg = Ridge()
+    ridge_reg.fit(X_train, y_train)
+    regrViz(ridge_reg, X_test, y_test)
+
     # lasso_reg = Lasso()
     # lasso_reg.fit(X_train, y_train)
     # y_pred = lasso_reg.predict(X_test)
