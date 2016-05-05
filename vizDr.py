@@ -101,6 +101,19 @@ def plot_classification_report(cr, title='Classification report', cmap=plt.cm.Re
     plt.xlabel('Measures')
     plt.show()
 
+def rocViz(y, yhat, model):
+    false_positive_rate, true_positive_rate, thresholds = roc_curve(y,yhat)
+    roc_auc = auc(false_positive_rate, true_positive_rate)
+    plt.title('Receiver Operating Characteristic for %s' % model)
+    plt.plot(false_positive_rate, true_positive_rate, 'blue', label='AUC = %0.2f'% roc_auc)
+    plt.legend(loc='lower right')
+    plt.plot([0,1],[0,1],'m--')
+    plt.xlim([0,1])
+    plt.ylim([0,1.1])
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    plt.show()
+
 def regrViz(model,X,y):
     plt.scatter(X, y,  color='black')
     plt.plot(X, model.predict(X), color='blue', linewidth=3)
@@ -238,20 +251,10 @@ if __name__ == '__main__':
     # lin_clf.fit(X_train, y_train)
     # y_true = y_test
     # y_pred = lin_clf.predict(X_test)
+
     # # print confusion_matrix(y_true, y_pred)
     # # print classification_report(y_true, y_pred, target_names=["did not default","defaulted"])
-    # false_positive_rate, true_positive_rate, thresholds = roc_curve(y_true, y_pred)
-    # roc_auc = auc(false_positive_rate, true_positive_rate)
-    #
-    # plt.title('Receiver Operating Characteristic for LinearSVC')
-    # plt.plot(false_positive_rate, true_positive_rate, 'blue', label='AUC = %0.2f'% roc_auc)
-    # plt.legend(loc='lower right')
-    # plt.plot([0,1],[0,1],'m--')
-    # plt.xlim([0,1])
-    # plt.ylim([0,1.1])
-    # plt.ylabel('True Positive Rate')
-    # plt.xlabel('False Positive Rate')
-    # plt.show()
+    # rocViz(y_true,y_pred,"Linear Support Vector Model")
     #
     #
     # # Then try k-nearest neighbor
@@ -265,29 +268,16 @@ if __name__ == '__main__':
     # false_positive_rate, true_positive_rate, thresholds = roc_curve(y_true, y_pred)
     # roc_auc = auc(false_positive_rate, true_positive_rate)
     #
-    # plt.title('Receiver Operating Characteristic for K-Nearest Neighbors')
-    # plt.plot(false_positive_rate, true_positive_rate, 'blue', label='AUC = %0.2f'% roc_auc)
-    # plt.legend(loc='lower right')
-    # plt.plot([0,1],[0,1],'m--')
-    # plt.xlim([0,1])
-    # plt.ylim([0,1.1])
-    # plt.ylabel('True Positive Rate')
-    # plt.xlabel('False Positive Rate')
-    # plt.show()
-
-
-    conc_features = concrete[['cement', 'slag', 'ash', 'water', 'superplast', 'coarse', 'fine', 'age']]
-    conc_labels   = concrete['strength']
-
-    splits = cv.train_test_split(conc_features, conc_labels, test_size=0.2)
-    X_train, X_test, y_train, y_test = splits
-    ridge_reg = Ridge()
-    ridge_reg.fit(X_train, y_train)
-    y_true = y_test
-    y_pred = ridge_reg.predict(X_test)
+    # rocViz(false_positive_rate, true_positive_rate, roc_auc, model)
+    #
+    # conc_features = concrete[['cement', 'slag', 'ash', 'water', 'superplast', 'coarse', 'fine', 'age']]
+    # conc_labels   = concrete['strength']
+    #
+    # splits = cv.train_test_split(conc_features, conc_labels, test_size=0.2)
+    # X_train, X_test, y_train, y_test = splits
+    # ridge_reg = Ridge()
+    # ridge_reg.fit(X_train, y_train)
+    # y_true = y_test
+    # y_pred = ridge_reg.predict(X_test)
     # print "Mean squared error = %0.3f" % mse(y_true, y_pred)
     # print "R2 score = %0.3f" % r2_score(y_true, y_pred)
-
-    plotResids(conc_features,conc_labels,SVR())
-    plotResids(conc_features,conc_labels,Lasso())
-    plotResids(conc_features,conc_labels,RANSACRegressor())

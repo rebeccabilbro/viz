@@ -370,18 +370,21 @@ Another way to examine the performance of our classifiers is with the Receiver O
 from sklearn.metrics import auc
 from sklearn.metrics import roc_curve
 
-false_positive_rate, true_positive_rate, thresholds = roc_curve(y_true, y_pred)
-roc_auc = auc(false_positive_rate, true_positive_rate)
+def rocViz(y, yhat, model):
+    false_positive_rate, true_positive_rate, thresholds = roc_curve(y,yhat)
+    roc_auc = auc(false_positive_rate, true_positive_rate)
+    plt.title('Receiver Operating Characteristic for %s' % model)
+    plt.plot(false_positive_rate, true_positive_rate, 'blue', label='AUC = %0.2f'% roc_auc)
+    plt.legend(loc='lower right')
+    plt.plot([0,1],[0,1],'m--')
+    plt.xlim([0,1])
+    plt.ylim([0,1.1])
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    plt.show()
 
-plt.title('Receiver Operating Characteristic')
-plt.plot(false_positive_rate, true_positive_rate, 'blue', label='AUC = %0.2f'% roc_auc)
-plt.legend(loc='lower right')
-plt.plot([0,1],[0,1],'m--')
-plt.xlim([0,1])
-plt.ylim([0,1.1])
-plt.ylabel('True Positive Rate')
-plt.xlabel('False Positive Rate')
-plt.show()
+rocViz(y_true,y_pred,"Linear SVC Model")
+rocViz(y_true,y_pred,"K-Nearest Neighbor Model")
 ```
 
 ![ROC_AUC Curve](figures/roc_auc.png)
