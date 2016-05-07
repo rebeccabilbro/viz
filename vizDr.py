@@ -13,6 +13,8 @@ from pandas.tools.plotting import radviz
 from pandas.tools.plotting import parallel_coordinates
 
 from sklearn import cross_validation as cv
+from sklearn.grid_search import GridSearchCV
+from sklearn.learning_curve import validation_curve
 
 from sklearn.metrics import auc
 from sklearn.metrics import r2_score
@@ -26,7 +28,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 from sklearn.preprocessing import normalize, scale
 
-from sklearn.svm import SVR, LinearSVC
+from sklearn.svm import SVR, SVC, LinearSVC
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, BayesianRidge, RANSACRegressor
 from sklearn.neighbors import KNeighborsClassifier
 
@@ -114,12 +116,6 @@ def rocViz(y, yhat, model):
     plt.xlabel('False Positive Rate')
     plt.show()
 
-def regrViz(model,X,y):
-    plt.scatter(X, y,  color='black')
-    plt.plot(X, model.predict(X), color='blue', linewidth=3)
-    plt.xticks(())
-    plt.yticks(())
-    plt.show()
 
 def regrErrorViz(model,features,labels):
     predicted = cv.cross_val_predict(model, features, labels, cv=12)
@@ -232,16 +228,16 @@ if __name__ == '__main__':
     #
     #
     #
-    # # We'll divide our credit data into features (attributes) and labels (targets)
-    # cred_features = credit[['limit', 'sex', 'edu', 'married', 'age', 'apr_delay', 'may_delay', \
-    #                         'jun_delay', 'jul_delay', 'aug_delay', 'sep_delay', 'apr_bill', 'may_bill', \
-    #                         'jun_bill', 'jul_bill', 'aug_bill', 'sep_bill', 'apr_pay', 'may_pay', \
-    #                         'jun_pay', 'jul_pay', 'aug_pay', 'sep_pay']]
-    # cred_labels   = credit['default']
-    #
-    # # Scale it
-    # standardized_cred_features = scale(cred_features)
-    #
+    # We'll divide our credit data into features (attributes) and labels (targets)
+    cred_features = credit[['limit', 'sex', 'edu', 'married', 'age', 'apr_delay', 'may_delay', \
+                            'jun_delay', 'jul_delay', 'aug_delay', 'sep_delay', 'apr_bill', 'may_bill', \
+                            'jun_bill', 'jul_bill', 'aug_bill', 'sep_bill', 'apr_pay', 'may_pay', \
+                            'jun_pay', 'jul_pay', 'aug_pay', 'sep_pay']]
+    cred_labels   = credit['default']
+
+    # Scale it
+    standardized_cred_features = scale(cred_features)
+
     # # Then split into 'test' and 'train' for cross validation
     # splits = cv.train_test_split(standardized_cred_features, cred_labels, test_size=0.2)
     # X_train, X_test, y_train, y_test = splits
@@ -252,8 +248,54 @@ if __name__ == '__main__':
     # y_true = y_test
     # y_pred = lin_clf.predict(X_test)
 
-    # # print confusion_matrix(y_true, y_pred)
-    # # print classification_report(y_true, y_pred, target_names=["did not default","defaulted"])
+    X = standardized_cred_features
+    y = cred_labels
+    p_range = np.logspace(-7, 3, 5)
+    train_scores, test_scores = validation_curve(SVC(), X, y, param_name="gamma",
+                                param_range=p_range, cv=12, scoring="accuracy", n_jobs=1)
+    train_scores_mean = np.mean(train_scores, axis=1)
+    train_scores_std = np.std(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
+    test_scores_std = np.std(test_scores, axis=1)
+
+    plt.semilogx(p_range, train_scores_mean, label="Training score", color="r")
+    plt.semilogx(p_range, test_scores_mean, label="Cross-validation score", color="g")
+
+    plt.show()
+
+    # C_range = np.logspace(-2, 10, 13)
+    # gamma_range = np.logspace(-9, 3, 13)
+    # param_grid = dict(gamma=gamma_range, C=C_range)
+    # grid = GridSearchCV(SVC(), param_grid=param_grid)
+    # grid.fit(standardized_cred_features, cred_labels)
+    #
+    # print("The best parameters are %s with a score of %0.2f"
+    #       % (grid.best_params_, grid.best_score_))
+    #
+    # scores = [x[1] for x in grid.grid_scores_]
+    # scores = np.array(scores).reshape(len(C_range), len(gamma_range))
+    #
+    # plt.figure(figsize=(8, 6))
+    # plt.subplots_adjust(left=.2, right=0.95, bottom=0.15, top=0.95)
+    # plt.imshow(scores, interpolation='nearest', cmap=plt.cm.hot)
+    # plt.xlabel('gamma')
+    # plt.ylabel('C')
+    # plt.colorbar()
+    # plt.xticks(np.arange(len(gamma_range)), gamma_range, rotation=45)
+    # plt.yticks(np.arange(len(C_range)), C_range)
+    # plt.title('Validation accuracy')
+    # plt.show()
+
+
+
+
+
+
+
+
+
+    # print confusion_matrix(y_true, y_pred)
+    # print classification_report(y_true, y_pred, target_names=["did not default","defaulted"])
     # rocViz(y_true,y_pred,"Linear Support Vector Model")
     #
     #

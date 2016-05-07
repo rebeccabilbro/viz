@@ -19,26 +19,65 @@ model.predict(X)
 
 ...can instantiate and fit a model? How do you build intuition around what initial model to select? Which features do you use? Which should you normalize? How do you identify problems like local minima and overfit?
 
-To help us think through these questions, let's take a look at the following four datasets, imagining that we want to produce predictive models for each set:    
+To help us think through these questions, let's take a look at the following four 2-dimensional arrays, imagining that we want to produce predictive models for each array:    
 
-![Anscombe's Data](figures/anscombesdatasets.png)
+```python
+import numpy as np
 
-What kind of model should we use to fit the data? Let's compute some statistical properties for each of the datasets: the mean and variance for x and for y, the correlation coefficient for (x,y) and the slope and intercept of their linear regression. Here's what we get for all four datasets:
+i   = np.array([[10.0, 8.0, 13.0, 9.0, 11.0, 14.0, 6.0, 4.0, 12.0, 7.0, 5.0],\
+               [8.04, 6.95, 7.58, 8.81, 8.33, 9.96, 7.24, 4.26, 10.84, 4.82, 5.68]])
+ii  = np.array([[10.0, 8.0, 13.0, 9.0, 11.0, 14.0, 6.0, 4.0, 12.0, 7.0, 5.0],\
+               [9.14, 8.14, 8.74, 8.77, 9.26, 8.10, 6.13, 3.10, 9.13, 7.26, 4.74]])
+iii = np.array([[10.0, 8.0, 13.0, 9.0, 11.0, 14.0, 6.0, 4.0, 12.0, 7.0, 5.0],\
+               [7.46, 6.77, 12.74, 7.11, 7.81, 8.84, 6.08, 5.39, 8.15, 6.42, 5.73]])
+iv  = np.array([[8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 19.0, 8.0, 8.0, 8.0],\
+               [6.58, 5.76, 7.71, 8.84, 8.47, 7.04, 5.25, 12.50, 5.56, 7.91, 6.89]])
+```
 
-| Property               | Value                           |  
-| ---------------------- | --------------------------------|    
-| mean(x)                | 9                               |    
-| variance(x)            | 11                              |    
-| mean(y)                | 7.50                            |    
-| variance(y)            | ~4.125                          |    
-| np.corrcoef(x,y)       | 0.816                           |    
-| stats.linregress(x,y)  | slope = 0.5, intercept = 3.00   |    
+What kind of model should we use to fit our data sets? Let's compute some statistical properties for each of the arrays: the mean and variance, the correlation coefficient, and the slope and intercept of their linear regression.
 
+```python
+from scipy import stats
 
-In other words, from a statistical standpoint, they're nearly identical. This might lead us to decide to use a single model for each, maybe `sklearn.linear_model.LinearRegression`? And yet, if we were to plot the points for each of the datasets, we would see that they are not at all alike:    
+def getStats(twoDarray):
+    print np.mean(twoDarray[0])
+    print np.mean(twoDarray[1])
+    print np.var(twoDarray[0])
+    print np.var(twoDarray[1])
+    print np.corrcoef(twoDarray[0],twoDarray[1])
+    print stats.linregress(twoDarray[0],twoDarray[1])
+
+getStats(i)
+getStats(ii)
+getStats(iii)
+getStats(iv)
+```
+
+It turns out that from a statistical standpoint, the four arrays nearly identical! This might lead us to decide to use a single model for each, maybe `sklearn.linear_model.LinearRegression`? And yet, if we were to plot the points for each of the datasets, we would see that they are not at all alike:    
+
+```python
+import matplotlib.pyplot as plt
+
+def makePlot(twoDarray):
+    fig = plt.figure()
+    x = twoDarray[0]
+    y = twoDarray[1]
+    plt.scatter(x, y, c='g')
+    axes = plt.gca()
+    m, b = np.polyfit(x, y, 1)
+    X_plot = np.linspace(axes.get_xlim()[0],axes.get_xlim()[1],100)
+    plt.plot(X_plot, m*X_plot + b, '-')
+    plt.show()
+
+makePlot(i)
+makePlot(ii)
+makePlot(iii)
+makePlot(iv)
+```
+
 ![Anscombe's Quartet](figures/anscombesquartet.png)   
 
-More importantly, a simple linear regression model is not going to perform equally well on each. While we can see a linear relationship in (_x1_,_y1_) and (_x3_,_y3_), their regression lines are substantially different. In the (_x2_,_y2_) plot, we can see that the variables are related but not linearly correlated, and also that they are not normally distributed. Moreover, both the (_x3_,_y3_) and the (_x4_,_y4_) datasets contain outliers big enough to strongly influence the correlation coefficients.
+More importantly, a simple linear regression model is not going to perform equally well on each. While we can see a linear relationship in _i_ and _iii_, their regression lines are substantially different. In the _ii_ plot, we can see that the variables are related but not linearly correlated, and also that they are not normally distributed. Moreover, both the _iii_ and the _iv_ datasets contain outliers big enough to strongly influence the correlation coefficients.
 
 Assembled by English statistician Frank Anscombe in 1973, the takeaway from these four datasets, known as [Anscombe's Quartet](https://en.wikipedia.org/wiki/Anscombe%27s_quartet), and their corresponding visualizations is that of all of the analytical tools at our disposal, sometimes our eyes are the most important. In data science, visual diagnostics are a powerful but frequently underestimated tool. Visualizations don't have to be the end of the pipeline. They can allow us to find patterns we simply cannot see by looking at raw data alone. Where static outputs and tabular data may render patterns opaque, human visual analysis can uncover volumes and lead to more robust programming and better data products. In machine learning, where lots of things can cause trouble (messy data, overtraining, undertuning, the curse of dimensionality, etc.) visual diagnostics can mean the difference between a model that crashes and burns, and one that predicts the future. In this post, I'd like to show how visualization tools can offer analytical support at several key stages in the machine learning process. I'll demonstrate how to deploy some of the visualization tools from the standard Scikit-Learn and MatPlotLib libraries (along with a few special tricks from Pandas, Bokeh, and Seaborn) and illustrate how visual diagnostics can support the "model selection triple": doing feature analysis, choosing a model, and tuning its parameters.
 
@@ -313,7 +352,7 @@ Visualizations and flow diagrams of the model selection process like this can be
 Also, while unsupervised methods are beyond the scope of this post, it's worth noting that the Scikit-Learn [cluster comparison plot](http://scikit-learn.org/stable/auto_examples/cluster/plot_cluster_comparison.html) can be a useful tool for unsupervised model selection in that it depicts the substantial difference in the performance of clustering models across different datasets.
 
 
-## Visual Evaluation in Scikit-Learn       
+## Visual Evaluation and Tuning in Scikit-Learn       
 ### Evaluating classifiers
 In the previous section, when we ran each of our models, we also ran some standard metrics to get some feedback on how well the classifiers and regressors were performing.  In this section, we'll delve into those metrics with a bit more depth and explore how to deploy visualization tools from Scikit-Learn to better 'see' how our models are performing.
 
@@ -395,43 +434,16 @@ We can also calculate the area under curve (AUC) and integrate that into our plo
 
 
 ### Evaluating Regressors
-The results of our regression models were presented as mean squared errors and coefficients of determination, which looked something like this:    
+Let's say we want to experiment with a few different models for our concrete dataset and then determine which one performs the best. In the above examples, the standard output for our regression models is presented in terms of the mean squared errors and coefficients of determination, which looked something like this:    
 ```python
 Mean squared error = 116.268
 R2 score = 0.606
 ```
 
-With regression, we can visualize how models perform for different features within the dataspace:
-```python
-def regrViz(model,X,y):
-    plt.scatter(X, y,  color='black')
-    plt.plot(X, model.predict(X), color='blue', linewidth=3)
-    plt.xticks(())
-    plt.yticks(())
-    plt.show()
+The numeric scores are helpful, but they don't give us a good feel for _why_ a certain model is outperforming another, and they don't tell us how to tune the parameters of our models so that we can improve the scores. With regression, two visual evaluation techniques that can help us with diagnosing model deficiencies are prediction error plots and residual plots.
 
-splits = cv.train_test_split(concrete[['water']], concrete['strength'], test_size=0.2)
-X_train, X_test, y_train, y_test = splits
-ridge_reg = Ridge()
-ridge_reg.fit(X_train, y_train)
-regrViz(ridge_reg, X_test, y_test)
-
-splits = cv.train_test_split(concrete[['superplast']], concrete['strength'], test_size=0.2)
-X_train, X_test, y_train, y_test = splits
-ridge_reg = Ridge()
-ridge_reg.fit(X_train, y_train)
-regrViz(ridge_reg, X_test, y_test)
-
-splits = cv.train_test_split(concrete[['cement']], concrete['strength'], test_size=0.2)
-X_train, X_test, y_train, y_test = splits
-ridge_reg = Ridge()
-ridge_reg.fit(X_train, y_train)
-regrViz(ridge_reg, X_test, y_test)
-```
-
-![Regression models in dataspace](figures/model_in_dataspace.png)
-
-We can also visualize the prediction errors of different models with cross validation:
+#### Prediction Error Plots
+To get a sense of how often our model is predicting values that are close to the expected values, we'll plot the actual label column from the concrete dataset (which indicates the strength of the concrete) against the predicted value generated by each of our models. What we're looking for here is a clear relationship between the predicted and actual values.    
 
 ```python
 def regrErrorViz(model,features,labels):
@@ -450,7 +462,8 @@ regrErrorViz(RANSACRegressor(),conc_features, conc_labels)
 
 ![Visualizing error in regression models](figures/model_error.png)
 
-Finally, we can plot residuals to visualize error and the extent to which our model has captured the behavior of the data.  If the data points appear to be evenly dispersed around the plotted line, our model is performing well. If the data points appear to have some structure that does not coincide with the plotted line, we have failed to capture its behavior and should either consider a new model or an exploration of the hyperparameters.
+#### Residual Plots
+A residual is the difference between the labeled value and the predicted value for each instance in our dataset. We can plot residuals to visualize the extent to which our model has captured the behavior of the data. By plotting the residuals for a series of instances, we can check whether they're consistent with random error; we should not be able to predict the error for any given instance. If the data points appear to be evenly (randomly) dispersed around the plotted line, our model is performing well. What we're looking for is a mostly symmetrical distribution with points that tend to cluster towards the middle of the plot, ideally around smaller numbers of the y-axis. If we observe some kind of structure that does not coincide with the plotted line, we have failed to capture the behavior of the data and should either consider some feature engineering, selecting a new model, or an exploration of the hyperparameters.
 
 ```python
 def plotResids(features,labels,model):
@@ -463,8 +476,8 @@ def plotResids(features,labels,model):
     plt.hlines(y=0, xmin=0, xmax=100)
     plt.title('Plotting residuals using training (blue) and test (green) data')
     plt.ylabel('Residuals')
-    plt.xlim([20,70])
-    plt.ylim([-50,50])
+    plt.xlim([20,70])        # Adjust according to your dataset
+    plt.ylim([-50,50])       # Adjust according to your dataset
     plt.show()
 
 plotResids(conc_features,conc_labels,Ridge())
@@ -474,34 +487,24 @@ plotResids(conc_features,conc_labels,SVR())
 
 ![Plotting residuals in regression models](figures/residuals.png)
 
-
-## Advanced machine learning: Visual tuning
-This kind of evaluation of our models should flow directly into a reflection on the models we initially selected, in some cases leading us to choose different models. However, our model evaluations should also prompt us to consider tuning. As you may have noticed, for every model we have used so far, we have accepted the default Scikit-Learn parameters and employed absolutely no hyperparameter tuning whatsoever. Getting good at tuning a model by adjusting its parameters is the next step to getting good at machine learning. How do you pick the best parameters? Most people use a grid search technique, establishing a range of parameters for the model to experiment with and then select the best performing. The downside of this approach is that it is largely a blind search. The best case scenario is that you end up with a better performing model but no additional intuition around tuning. A more common scenario is that you don't end up with a better model or more intuition.  
-
-![Gridsearch](figures/gridsearch.png)
-
-With grid search, the effective selection of the range of hyperparameters to search within requires some understanding of what parameters are available, what those parameters mean, what impact they can have on a model, and what a reasonable search space might be. Instead of using grid search (or using just grid search), we suggest trying...
+We can also diagnose specific problems by looking to the particular kinds of structures we observe in plots of non-random residuals. For example, an average value of _y_ that is not zero given thin vertical strips of the graph is indicative of bias.  A plot with points that are not even distributed across the x-axis is evidence of heteroscedastic residuals. Both can often be addressed through hyperparameter tuning to strengthen the predictive power of the model.
 
 
-### Visualizing variance and bias with validation curves
+### Advanced machine learning: Visual tuning
+This kind of evaluation of our models should flow directly into a reflection on the models we initially selected, in some cases leading us to choose different models. However, our model evaluations should also prompt us to consider tuning. As you may have noticed, for every model we have used so far, we have accepted the default Scikit-Learn parameters and employed absolutely no hyperparameter tuning whatsoever. Getting good at tuning a model by adjusting its parameters is the next step to getting good at machine learning.
 
-Training vs. validation scores of model for different values of a hyperparameter.
+#### Visualizing variance and bias with validation curves
 
-What information do we get from each plot?
-
-Training score and validation score both low => Underfit
-Training score high and validation score low => Overfit
-
+How do you pick the best parameters? One method is to use validation curves to visualize training and validation scores of a model through different values of a single hyperparameter. Let's experiment with a `SVC()` classifier for our credit card default data set. We'll make a validation curve by plotting the training scores and validation scores along different values of the kernel coefficient _gamma_.     
 
 ```python
-import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.learning_curve import validation_curve
 
-param_range = np.logspace(-7, 3, 5)
-
+X = standardized_cred_features
+y = cred_labels
+p_range = np.logspace(-7, 3, 5)
 train_scores, test_scores = validation_curve(SVC(), X, y, param_name="gamma",
-param_range=param_range, cv=10, scoring="accuracy", n_jobs=1)
+                            param_range=p_range, cv=12, scoring="accuracy", n_jobs=1)
 train_scores_mean = np.mean(train_scores, axis=1)
 train_scores_std = np.std(train_scores, axis=1)
 test_scores_mean = np.mean(test_scores, axis=1)
@@ -513,20 +516,59 @@ plt.semilogx(param_range, test_scores_mean, label="Cross-validation score", colo
 plt.show()
 ```
 
+![Validation curve](figure/validation_curve.png)    
 
-##  Can we do better? A view of the model selection triple
-Discussions of machine learning frequently revolve around model selection. Whether it's logistic regression, neural nets, support vector machines, random forests, or Bayesian methods, everyone seems to have their favorite! These discussions tend to truncate the challenges of machine learning into a single problem. Sure, picking a good model is important, but it's certainly not enough (and it's debatable whether a model can actually be 'good' devoid of the context of the domain, the hypothesis, the shape of the data, the intended application, etc.). To produce a fitted model that is well-suited to the data, predictive, and also performant requires thoughtful featuring analysis and parameter tuning. This trio of steps (feature selection, model selection, and tuning) have been referred to as the [model selection triple](http://pages.cs.wisc.edu/~arun/vision/SIGMODRecord15.pdf).
+What we're looking for is the spot with the highest value for both the training and the validation scores. If both scores are low, it's an indication of underfit. If the training score is high but the validation score is low, it's an indication of overfit.
 
-One of the reasons that machine learning practitioners don't often talk about the model selection triple is because it's hard to describe. As Kumar et al. (2015) suggest, "Model selection is iterative and exploratory because the space of [model selection triples] is usually infinite, and it is generally impossible for analysts to know a priori which [combination] will yield satisfactory accuracy and/or insights." In other words, this is the part that makes machine learning _hard_. The process is complex, iterative, and disjointed, often with many missteps and restarts along the way. And yet these iterations are central to the science of machine learning &mdash; the way to optimize is not to limit but to facilitate those iterations, which can be done by integrating visual diagnostics into each part of the model selection triple workflow.     
+
+#### Gridsearch plotting
+When it comes to hyperparameter tuning, most people use grid search. Grid searching entails establishing a range of values for multiple parameters to let the model test, and then having it select the best values for each of the parameters. For example, in our `SVC` model for the credit data set, we could try to improve our accuracy by experimenting with different values for _gamma_ as well as for the penalty parameter _C_ of the error term:
+
+```python
+from sklearn.grid_search import GridSearchCV
+
+C_range = np.logspace(-2, 10, 13)
+gamma_range = np.logspace(-9, 3, 13)
+param_grid = dict(gamma=gamma_range, C=C_range)
+grid = GridSearchCV(SVC(), param_grid=param_grid)
+grid.fit(standardized_cred_features, cred_labels)
+
+print("The best parameters are %s with a score of %0.2f"
+      % (grid.best_params_, grid.best_score_))
+```
+
+The downside of this approach is that it is largely a blind search. The best case scenario is that you end up with a better performing model but no additional intuition around its tuning. A common scenario is that you don't end up with a better model _or_ more intuition.  
+
+![Gridsearch](figures/gridsearch.png)
+
+Here's the problem: with grid search, the effective selection of the initial range of hyperparameters to search within requires some understanding of what parameters are available, what those parameters mean, what impact they can have on a model, and what a reasonable search space might be. Spinning up intuition overnight isn't going to happen, but you can develop it more quickly if you combine grid search with a heat map visualization that can help sensitize you to the relationships between's models accuracy scores and different hyperparameter values. Try this:    
+
+```python
+scores = [x[1] for x in grid.grid_scores_]
+scores = np.array(scores).reshape(len(C_range), len(gamma_range))
+
+plt.figure(figsize=(8, 6))
+plt.subplots_adjust(left=.2, right=0.95, bottom=0.15, top=0.95)
+plt.imshow(scores, interpolation='nearest', cmap=plt.cm.hot)
+plt.xlabel('gamma')
+plt.ylabel('C')
+plt.colorbar()
+plt.xticks(np.arange(len(gamma_range)), gamma_range, rotation=45)
+plt.yticks(np.arange(len(C_range)), C_range)
+plt.title('Validation accuracy')
+plt.show()
+```
+
+![Validation accuracy as a function of gamma and C](figures/validation_heatmap.png)
+
+## Conclusion    
+But, when it comes to machine learning, ultimately the most important picture to have is the big picture. Discussions of (i.e. arguments about) machine learning are usually about which model is the best. Whether it's logistic regression, random forests, Bayesian methods, support vector machines, or neural nets, everyone seems to have their favorite! Unfortunately these discussions tend to truncate the challenges of machine learning into a single problem, which is a particularly problematic misrepresentation for people who are just getting started with ML. Sure, picking a good model is important, but it's certainly not enough (and it's debatable whether a model can actually be 'good' devoid of the context of the domain, the hypothesis, the shape of the data, the intended application, etc, but we'll leave that to another post).
+
+Producing a fitted model that is well-suited to the data, predictive, and also performant is critically dependent on feature selection and tuning as well as model selection, and tuning. This trio of steps have been referred to as the [model selection triple](http://pages.cs.wisc.edu/~arun/vision/SIGMODRecord15.pdf). As Kumar et al. (2015) suggest, "Model selection is iterative and exploratory because the space of [model selection triples] is usually infinite, and it is generally impossible for analysts to know a priori which [combination] will yield satisfactory accuracy and/or insights." In other words, this is the part that makes machine learning _hard_. The process is complex, iterative, and disjointed, often with many missteps and restarts along the way. And yet these iterations are central to the science of machine learning &mdash; optimization is not about limiting those iterations (e.g. helping you pick the best model on the first try every time), but about facilitating them. For that reason, we'll leave you with the visualization we think is the most important of all: a representation of the workflow that we use to put together all of the steps and visual diagnostics described throughout this post:        
 
 ![Model Selection Triple Workflow](figures/model_triple_workflow.png)
 
-
-## Conclusion    
-Although many of us tend to think of graphs and diagrams as the end phase of the pipeline, visualization has a critical role to play throughout the analytic process. Whether you have an academic background in predictive methods or not, visual diagnostics are the key to augmenting the algorithms already implemented in Python.
-
-...models' performance, stability, and predictive value
-
+Although many of us tend to think of graphs and diagrams as the end phase of the pipeline, visualization has a critical role to play throughout the machine learning process. Many tools are available and already implemented in Scikit-Learn, Matplotlib, Pandas, Bokeh, and Seaborn. And now that you've seen them in action, we hope you'll enjoy experimenting with them and iterating on them for your own data sets! Of course, there are also many tools that don't exist yet &mdash; particularly ones that enable visual steering through interactive feature analysis (like smooth zoom-and-filter implementations of hierarchical aggregation for multi-dimensional data) and hyperparameter tuning (like slick parameter sliders). But we'd venture to guess that these tools are not far off, particularly given the explosive growth in machine learning-based applications and the growing demand for [data products](https://districtdatalabs.silvrback.com/the-age-of-the-data-product), and we'll keep our eyes peeled.
 
 
 ## Resources and Helpful Links    
