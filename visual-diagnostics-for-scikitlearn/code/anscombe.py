@@ -36,10 +36,10 @@ def make_plot(a, b, c, d):
         x = arr[0]
         y = arr[1]
 
-        ax.scatter(x, y, c='g')
+        ax.scatter(x, y, c='#2B94E9')
         m,b = np.polyfit(x, y, 1)
         X = np.linspace(ax.get_xlim()[0], ax.get_xlim()[1], 100)
-        ax.plot(X, m*X+b, '-')
-    plt.show()
+        ax.plot(X, m*X+b, '-', c='#666666')
+    plt.savefig("/Users/pepper/Desktop/Projects/DDL/pycon2016/vizMLslides/images/anscombe.png",transparent=True)
 
 make_plot(i, ii, iii, iv)
